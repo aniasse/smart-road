@@ -1,5 +1,7 @@
 use macroquad::{prelude::*, rand::gen_range};
 use uuid::Uuid;
+use std::thread;
+use std::time::Duration;
 
 pub const CAR_SIZE: Vec2 = vec2(43., 33.);
 pub const Zone_SIZE: Vec2 = vec2(43., 33.);
@@ -7,6 +9,7 @@ pub const Zone_SIZE: Vec2 = vec2(43., 33.);
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vehicule {
     pub uuid: Uuid,
+    pub vehicule_type: usize,
     pub start_point: Vec2, // Point de départ de la voiture.
     pub rectangle: Rect, // Rectangle représentant la position et la taille de la voiture.
     pub current_direction: String,// Direction actuelle de la voiture
@@ -20,7 +23,6 @@ pub struct Vehicule {
     pub final_point: Vec2,//
     pub current_speed: f32,
     pub randomized_initial_speed: f32,
-    pub texture_index: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -31,7 +33,7 @@ pub struct Dimensions {
 }
 
 impl Vehicule {
-    pub fn new(randomized_behavior: &str, initial_direction: &str, texture_index: usize) -> Self {
+    pub fn new(randomized_behavior: &str, initial_direction: &str, vehicule_type: usize) -> Self {
         let random_speed = gen_range(0.8, 2.);
         let start_point = match randomized_behavior {
             "RU" => vec2(1050., 495.),
@@ -96,17 +98,14 @@ impl Vehicule {
                 "UL" => vec2(100., 485.),
                 _ => panic!("Unexpected lane"),
             },
-            texture_index,
+            vehicule_type,
         }
     }
  // Ajoute un véhicule à la liste, s'il n'y a pas de collision
-    pub fn ajouter_vehicule(vehicules_ref: &mut Vec<Vehicule>, randomized_behavior: &str, initial_direction: &str, texture_index: usize) {
-        let possible_new_car = Vehicule::new(randomized_behavior, initial_direction, texture_index);
+    pub fn ajouter_vehicule(vehicules_ref: &mut Vec<Vehicule>, randomized_behavior: &str, initial_direction: &str, vehicule_type: usize) {
+        let possible_new_car = Vehicule::new(randomized_behavior, initial_direction, vehicule_type);
         if !vehicules_ref.iter_mut().any(|other_car| {
-            possible_new_car
-                .rectangle
-                .intersect(other_car.rectangle)
-                .is_some()
+            possible_new_car.rectangle.intersect(other_car.rectangle).is_some()
         }) && vehicules_ref.len() < 9999
         {
             vehicules_ref.push(possible_new_car)
@@ -116,9 +115,7 @@ impl Vehicule {
     pub fn intersection(&mut self, vehicules_ref: &Vec<Vehicule>, core_intersection: &Rect) {
         let mut temp_vehicules = vehicules_ref.clone();
         temp_vehicules.retain(|car| car.uuid != self.uuid);
-        if self.behavior_code == "LR"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "LR" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -127,9 +124,7 @@ impl Vehicule {
                 self.waiting = true;
             }
         }
-        if self.behavior_code == "LU"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "LU" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -138,9 +133,7 @@ impl Vehicule {
                 self.waiting = true;
             }
         }
-        if self.behavior_code == "RD"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "RD" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -149,9 +142,7 @@ impl Vehicule {
                 self.waiting = true;
             }
         }
-        if self.behavior_code == "RL"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "RL" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -161,9 +152,7 @@ impl Vehicule {
             }
         }
 
-        if self.behavior_code == "UR"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "UR" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -173,9 +162,7 @@ impl Vehicule {
                 self.waiting = true;
             }
         }
-        if self.behavior_code == "UD"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "UD" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -186,9 +173,7 @@ impl Vehicule {
             }
         }
 
-        if self.behavior_code == "DL"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "DL" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -198,9 +183,7 @@ impl Vehicule {
                 self.waiting = true;
             }
         }
-        if self.behavior_code == "DU"
-            && self.zone.intersect(*core_intersection).is_some()
-            && self.rectangle.intersect(*core_intersection).is_none()
+        if self.behavior_code == "DU" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
         {
             self.waiting = false;
             if temp_vehicules.iter().any(|car| {
@@ -255,10 +238,8 @@ impl Vehicule {
         match &*self.current_direction {
             "West" => {
                 // Update zone rectangle
-                (self.zone.x, self.zone.y) =
-                    (self.rectangle.x - self.zone_size.long_edge, self.rectangle.y);
-                (self.zone.w, self.zone.h) =
-                    (self.zone_size.long_edge, self.zone_size.short_edge);
+                (self.zone.x, self.zone.y) = (self.rectangle.x - self.zone_size.long_edge, self.rectangle.y);
+                (self.zone.w, self.zone.h) = (self.zone_size.long_edge, self.zone_size.short_edge);
 
                 // Reposition the zone when intersection occur
                 for (other_index, other_car) in temp_vehicules.iter().enumerate() {
@@ -477,9 +458,7 @@ impl Vehicule {
                 self.has_turned = true;
             }
         }
-        if !self.has_turned
-            && self.behavior_code == "UL"
-            && self.rectangle.y + self.car_size.long_edge >= 528.
+        if !self.has_turned && self.behavior_code == "UL" && self.rectangle.y + self.car_size.long_edge >= 528.
         {
             self.waiting = true;
             let temp_rect = Rect::new(
@@ -494,9 +473,7 @@ impl Vehicule {
             self.current_direction = "West".to_string();
             self.has_turned = true;
         }
-        if !self.has_turned
-            && self.behavior_code == "UR"
-            && self.rectangle.y + self.car_size.long_edge >= 650.
+        if !self.has_turned && self.behavior_code == "UR" && self.rectangle.y + self.car_size.long_edge >= 650.
         {
             self.waiting = true;
             let mut clear_to_turn = true;

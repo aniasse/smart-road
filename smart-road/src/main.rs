@@ -3,7 +3,8 @@ use macroquad::{prelude::*, rand::gen_range}; // Préférences et génération a
 use std::default::Default; // Pour les valeurs par défaut
 mod vehicule; // Module pour les voitures
 use vehicule::*; // Utilisation des éléments du module vehicule
-
+// use std::thread;
+// use std::time::Duration;
 // Fonction de configuration de la fenêtre
 fn conf() -> Conf {
     Conf {
@@ -37,34 +38,40 @@ async fn main() {
     ];
 
     let mut vehicules: Vec<Vehicule> = Vec::new();
-    let core_intersection = Rect::new(503., 520., 180., 180.); 
+    let core_intersection = Rect::new(503., 520., 180., 180.);
     
 
     loop{
-        let random_texture_index = gen_range(0, vehicule_textures.len());
+        let random_vehicule_type = gen_range(0, vehicule_textures.len());
 
         if is_key_pressed(Left) {
            // vehicule =  &vehicule_textures[gen_range(0, vehicule_textures.len())];
-            Vehicule::ajouter_vehicule(&mut vehicules, vec!["RU", "RL", "RD"][gen_range(0, 3)], "West", random_texture_index);
+            Vehicule::ajouter_vehicule(&mut vehicules, vec!["RU", "RL", "RD"][gen_range(0, 3)], "West", random_vehicule_type);
         } else if is_key_pressed(Up) {
-            Vehicule::ajouter_vehicule(&mut vehicules, vec!["DU", "DL", "DR"][gen_range(0, 3)], "North", random_texture_index);
+            Vehicule::ajouter_vehicule(&mut vehicules, vec!["DU", "DL", "DR"][gen_range(0, 3)], "North", random_vehicule_type);
         } else if is_key_pressed(Down) {
-            Vehicule::ajouter_vehicule(&mut vehicules, vec!["UL", "UD", "UR"][gen_range(0, 3)], "South", random_texture_index);
+            Vehicule::ajouter_vehicule(&mut vehicules, vec!["UL", "UD", "UR"][gen_range(0, 3)], "South", random_vehicule_type);
         } else if is_key_pressed(Right) {
-            Vehicule::ajouter_vehicule(&mut vehicules, vec!["LU", "LR", "LD"][gen_range(0, 3)], "East", random_texture_index);
+            Vehicule::ajouter_vehicule(&mut vehicules, vec!["LU", "LR", "LD"][gen_range(0, 3)], "East", random_vehicule_type);
         } else if is_key_pressed(KeyCode::R) {
             is_random = !is_random; // Alterne la génération aléatoire
         } else if is_random {
-            let random_texture_index = gen_range(0, vehicule_textures.len()); // Index aléatoire pour la texture
+            let random_vehicule_type = gen_range(0, vehicule_textures.len()); // Index aléatoire pour la texture
             // Génération aléatoire de voitures
-            let random_direction = vec!["West", "North", "South", "East"][gen_range(0, 4)];
+            let mut tab_car: [&str; 150] = [""; 150];;
+            tab_car[20]="West";
+            tab_car[40]="East";
+            tab_car[60]="North";
+            tab_car[80]="South";
+
+            let random_direction = tab_car[gen_range(0, 150)];
             match random_direction {
                 "West" => {
                     Vehicule::ajouter_vehicule(
                         &mut vehicules,
                         vec!["RU", "RL", "RD"][gen_range(0, 3)],
                         random_direction,
-                        random_texture_index,
+                        random_vehicule_type,
                     );
                 }
                 "North" => {
@@ -72,7 +79,7 @@ async fn main() {
                         &mut vehicules,
                         vec!["DU", "DL", "DR"][gen_range(0, 3)],
                         random_direction,
-                        random_texture_index,
+                        random_vehicule_type,
                     );
                 }
                 "South" => {
@@ -80,19 +87,21 @@ async fn main() {
                         &mut vehicules,
                         vec!["UL", "UD", "UR"][gen_range(0, 3)],
                         random_direction,
-                        random_texture_index,
+                        random_vehicule_type,
                     );
                 }
                 "East" => {
+                    // handle.join().unwrap();
                     Vehicule::ajouter_vehicule(
                         &mut vehicules,
                         vec!["LU", "LR", "LD"][gen_range(0, 3)],
                         random_direction,
-                        random_texture_index,
+                        random_vehicule_type,
                     );
                 }
                 _ => {}
             }
+            
         }
 
       //   MISE À JOUR DE L'ÉTAT
@@ -150,12 +159,10 @@ async fn main() {
 
         // Dessine les voitures
         vehicules.iter()
-            .for_each(|car| car.afficher_vehicules(&vehicule_textures[car.texture_index]));
+            .for_each(|car| car.afficher_vehicules(&vehicule_textures[car.vehicule_type]));
 
     next_frame().await;
     }
 
 }
-
-
 
