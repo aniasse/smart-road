@@ -1,10 +1,9 @@
 use macroquad::{prelude::*, rand::gen_range};
 use uuid::Uuid;
-use std::thread;
-use std::time::Duration;
+use std::time::Instant;
 
 pub const CAR_SIZE: Vec2 = vec2(43., 33.);
-pub const Zone_SIZE: Vec2 = vec2(43., 33.);
+pub const ZONE_SIZE: Vec2 = vec2(43., 33.);
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vehicule {
@@ -16,13 +15,14 @@ pub struct Vehicule {
     pub zone: Rect,// Rectangle représentant la zone de détection de la voiture
     pub proximity: f32,// Distance de détection
     pub has_turned: bool,// Indique si la voiture a tourné
-    pub behavior_code: String,// Code de comportement pour déterminer comment la voiture se déplace
+    pub status: String,// Code de comportement pour déterminer comment la voiture se déplace
     pub waiting: bool,// Indique si la voiture attend à une intersection
     pub car_size: Dimensions,//
     pub zone_size: Dimensions,//
     pub final_point: Vec2,//
     pub current_speed: f32,
     pub randomized_initial_speed: f32,
+    pub duree: Instant,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -60,17 +60,17 @@ impl Vehicule {
                 Rect::new(start_point.x, start_point.y, CAR_SIZE.y, CAR_SIZE.x)
             },
            zone : Rect::new(
-                start_point.x - Zone_SIZE.x,
+                start_point.x - ZONE_SIZE.x,
                 start_point.y,
-                Zone_SIZE.x,
-                Zone_SIZE.y,
+                ZONE_SIZE.x,
+                ZONE_SIZE.y,
             ),
-            proximity: Zone_SIZE.x,
+            proximity: ZONE_SIZE.x,
             current_direction: initial_direction.to_string(),
             randomized_initial_speed: random_speed,
             current_speed: random_speed,
             has_turned: false,
-            behavior_code: randomized_behavior.to_string(),
+            status: randomized_behavior.to_string(),
             waiting: false,
 
             car_size: Dimensions {
@@ -99,6 +99,7 @@ impl Vehicule {
                 _ => panic!("Unexpected lane"),
             },
             vehicule_type,
+            duree: Instant::now(),
         }
     }
  // Ajoute un véhicule à la liste, s'il n'y a pas de collision
@@ -110,127 +111,6 @@ impl Vehicule {
         {
             vehicules_ref.push(possible_new_car)
         }
-    }
-// Gère l'intersection du véhicule avec d'autres véhicules
-    pub fn intersection(&mut self, vehicules_ref: &Vec<Vehicule>, core_intersection: &Rect) {
-        let mut temp_vehicules = vehicules_ref.clone();
-        temp_vehicules.retain(|car| car.uuid != self.uuid);
-        if self.behavior_code == "LR" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                car.behavior_code == "LR" && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-        if self.behavior_code == "LU" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                car.behavior_code == "LU" && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-        if self.behavior_code == "RD" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                car.behavior_code == "RD" && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-        if self.behavior_code == "RL" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                car.behavior_code == "RL" && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-
-        if self.behavior_code == "UR" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                (car.behavior_code == "UR" || car.behavior_code == "RL")
-                    && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-        if self.behavior_code == "UD" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                (car.behavior_code == "UD" || car.behavior_code == "RL")
-                    && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-
-        if self.behavior_code == "DL" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                (car.behavior_code == "DL" || car.behavior_code == "UR")
-                    && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-        if self.behavior_code == "DU" && self.zone.intersect(*core_intersection).is_some()&& self.rectangle.intersect(*core_intersection).is_none()
-        {
-            self.waiting = false;
-            if temp_vehicules.iter().any(|car| {
-                (car.behavior_code == "DU" || car.behavior_code == "LR")
-                    && car.rectangle.intersect(*core_intersection).is_some()
-            }) {
-                self.waiting = true;
-            }
-        }
-    }
-
-// Déplace le véhicule selon sa direction
-    pub fn move_vehicule(&mut self, temp_vehicules: &mut Vec<Vehicule>) {
-        let mut temp_self_car = self.clone();
-        temp_vehicules.retain(|car| temp_self_car.uuid != car.uuid);
-
-        match &*self.current_direction {
-            "West" => {
-                temp_self_car.rectangle.x -= temp_self_car.current_speed;
-                if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
-                    temp_vehicules.push(temp_self_car);
-                    self.rectangle.x -= self.current_speed;
-                } 
-            }
-            "North" => {
-                temp_self_car.rectangle.y -= temp_self_car.current_speed;
-                if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
-                    temp_vehicules.push(temp_self_car);
-                    self.rectangle.y -= self.current_speed;
-                }
-            }
-            "South" => {
-                temp_self_car.rectangle.y += temp_self_car.current_speed;
-                if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
-                    temp_vehicules.push(temp_self_car);
-                    self.rectangle.y += self.current_speed;
-                }
-            }
-            "East" => {
-                temp_self_car.rectangle.x += temp_self_car.current_speed;
-                if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
-                    temp_vehicules.push(temp_self_car);
-                    self.rectangle.x += self.current_speed;
-                }
-            }
-            _ => {}
-        };
     }
 
     // Met à jour la zone de détection du véhicule
@@ -297,41 +177,10 @@ impl Vehicule {
             _ => {}
         }
     }
-// Met à jour la vitesse du véhicule en fonction de la zone
-    pub fn speed(&mut self) {
-        if &*self.current_direction == "West" || &*self.current_direction == "East" {
-            match self.zone.w {
-                //zone_width if zone_width <= 4. => self.current_speed = 0.,
-                zone_width if zone_width <= 3. => {
-                    self.current_speed = self.randomized_initial_speed * 0.;
-                }
-                zone_width if zone_width <= 30. => {
-                    self.current_speed = self.randomized_initial_speed * 0.25;
-                }
-                zone_width if zone_width <= 39. => {
-                    self.current_speed = self.randomized_initial_speed * 0.50
-                }
-                _ => self.current_speed = self.randomized_initial_speed,
-            }
-        } else if &*self.current_direction == "North" || &*self.current_direction == "South" {
-            match self.zone.h {
-                //zone_height if zone_height <= 4. => self.current_speed = 0.,
-                zone_height if zone_height <= 3. => {
-                    self.current_speed = 0.;
-                }
-                zone_height if zone_height <= 20. => {
-                    self.current_speed = self.randomized_initial_speed * 0.25;
-                }
-                zone_height if zone_height <= 39. => {
-                    self.current_speed = self.randomized_initial_speed * 0.50;
-                }
-                _ => self.current_speed = self.randomized_initial_speed,
-            }
-        }
-    }
+
  // Gère le tournant si possible
     pub fn turn_if_can(&mut self, temp_vehicules: &Vec<Vehicule>) {
-        if !self.has_turned && self.behavior_code == "RU" && self.rectangle.x <= 683. {
+        if !self.has_turned && self.status == "RU" && self.rectangle.x <= 683. {
             self.waiting = true;
             let mut clear_to_turn = true;
             let temp_rect = Rect::new(
@@ -355,7 +204,7 @@ impl Vehicule {
                 self.has_turned = true;
             }
         }
-        if !self.has_turned && self.behavior_code == "RD" && self.rectangle.x <= 555. {
+        if !self.has_turned && self.status == "RD" && self.rectangle.x <= 555. {
             self.waiting = true;
             let mut clear_to_turn = true;
             let temp_rect = Rect::new(555., self.rectangle.y, self.rectangle.h, self.rectangle.w);
@@ -374,7 +223,7 @@ impl Vehicule {
                 self.has_turned = true;
             }
         }
-        if !self.has_turned && self.behavior_code == "DR" && self.rectangle.y <= 695. {
+        if !self.has_turned && self.status == "DR" && self.rectangle.y <= 695. {
             self.waiting = true;
             let mut clear_to_turn = true;
             let temp_rect = Rect::new(self.rectangle.x, 695., self.rectangle.h, self.rectangle.w);
@@ -393,7 +242,7 @@ impl Vehicule {
                 self.has_turned = true;
             }
         }
-        if !self.has_turned && self.behavior_code == "DL" && self.rectangle.y <= 574. {
+        if !self.has_turned && self.status == "DL" && self.rectangle.y <= 574. {
             self.waiting = true;
             let mut clear_to_turn = true;
             let temp_rect = Rect::new(
@@ -418,7 +267,7 @@ impl Vehicule {
             }
         }
         if !self.has_turned
-            && self.behavior_code == "LD"
+            && self.status == "LD"
             && self.rectangle.x + self.car_size.long_edge >= 510.
         {
             self.waiting = true;
@@ -434,7 +283,7 @@ impl Vehicule {
             self.has_turned = true;
         }
         if !self.has_turned
-            && self.behavior_code == "LU"
+            && self.status == "LU"
             && self.rectangle.x + self.car_size.delta_edge >= 603.
         {
             self.waiting = true;
@@ -458,7 +307,7 @@ impl Vehicule {
                 self.has_turned = true;
             }
         }
-        if !self.has_turned && self.behavior_code == "UL" && self.rectangle.y + self.car_size.long_edge >= 528.
+        if !self.has_turned && self.status == "UL" && self.rectangle.y + self.car_size.long_edge >= 528.
         {
             self.waiting = true;
             let temp_rect = Rect::new(
@@ -473,7 +322,7 @@ impl Vehicule {
             self.current_direction = "West".to_string();
             self.has_turned = true;
         }
-        if !self.has_turned && self.behavior_code == "UR" && self.rectangle.y + self.car_size.long_edge >= 650.
+        if !self.has_turned && self.status == "UR" && self.rectangle.y + self.car_size.long_edge >= 650.
         {
             self.waiting = true;
             let mut clear_to_turn = true;
@@ -487,7 +336,7 @@ impl Vehicule {
                 if self.uuid != other_car.uuid
                     && (temp_rect.intersect(other_car.rectangle).is_some()
                         || (temp_rect.intersect(other_car.zone).is_some()
-                            && other_car.behavior_code == "DL"))
+                            && other_car.status == "DL"))
                 {
                     clear_to_turn = false;
                 }
@@ -500,75 +349,5 @@ impl Vehicule {
             }
         }
     }
-//afficher tous les vehicules
-    pub fn afficher_vehicules(&self, vehicule_img: &Texture2D) {
-        match &*self.current_direction {
-            "West" => draw_texture_ex(
-                vehicule_img,
-                self.rectangle.x + 1.5,
-                self.rectangle.y + 1.5,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(vec2(40., 30.)),
-                    source: None,
-                    rotation: 0.,
-                    flip_x: false,
-                    flip_y: false,
-                    pivot: None,
-                },
-            ),
-            "North" => {
-                let degree: f32 = 90.;
-                draw_texture_ex(
-                    vehicule_img,
-                    self.rectangle.x - 3.,
-                    self.rectangle.y + 7.,
-                    WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(vec2(40., 30.)),
-                        source: None,
-                        rotation: degree.to_radians(),
-                        flip_x: false,
-                        flip_y: false,
-                        pivot: None,
-                    },
-                )
-            }
-            "South" => {
-                let degree: f32 = 270.;
-                draw_texture_ex(
-                    vehicule_img,
-                    self.rectangle.x - 3.,
-                    self.rectangle.y + 7.,
-                    WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(vec2(40., 30.)),
-                        source: None,
-                        rotation: degree.to_radians(),
-                        flip_x: false,
-                        flip_y: false,
-                        pivot: None,
-                    },
-                )
-            }
-            "East" => {
-                let degree: f32 = 180.;
-                draw_texture_ex(
-                    vehicule_img,
-                    self.rectangle.x + 2.,
-                    self.rectangle.y + 2.,
-                    WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(vec2(40., 30.)),
-                        source: None,
-                        rotation: degree.to_radians(),
-                        flip_x: false,
-                        flip_y: false,
-                        pivot: None,
-                    },
-                )
-            }
-            _ => {}
-        }
-    }
+
 }
