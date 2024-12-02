@@ -5,7 +5,7 @@ use crate::stats::*;
 impl Vehicule{
 
     // Déplace le véhicule selon sa direction
-    pub fn move_vehicule(&mut self, temp_vehicules: &mut Vec<Vehicule>, _statistics: &mut Stats) {
+    pub fn move_vehicule(&mut self, temp_vehicules: &mut Vec<Vehicule>, statistics: &mut Stats) {
         let mut temp_self_car = self.clone();
         temp_vehicules.retain(|car| temp_self_car.uuid != car.uuid);
 
@@ -15,6 +15,8 @@ impl Vehicule{
                 if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
                     temp_vehicules.push(temp_self_car);
                     self.rectangle.x -= self.current_speed;
+                } else {
+                    statistics.close_calls += 1;
                 }
             }
             "North" => {
@@ -22,6 +24,8 @@ impl Vehicule{
                 if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
                     temp_vehicules.push(temp_self_car);
                     self.rectangle.y -= self.current_speed;
+                } else {
+                    statistics.close_calls += 1;
                 }
             }
             "South" => {
@@ -29,6 +33,8 @@ impl Vehicule{
                 if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
                     temp_vehicules.push(temp_self_car);
                     self.rectangle.y += self.current_speed;
+                } else {
+                    statistics.close_calls += 1;
                 }
             }
             "East" => {
@@ -36,6 +42,8 @@ impl Vehicule{
                 if temp_vehicules.iter_mut().all(|car| temp_self_car.rectangle.intersect(car.rectangle).is_none()){
                     temp_vehicules.push(temp_self_car);
                     self.rectangle.x += self.current_speed;
+                } else {
+                    statistics.close_calls += 1;
                 }
             }
             _ => {}
@@ -46,7 +54,6 @@ impl Vehicule{
     pub fn speed(&mut self) {
         if &*self.current_direction == "West" || &*self.current_direction == "East" {
             match self.zone.w {
-                //zone_width if zone_width <= 4. => self.current_speed = 0.,
                 zone_width if zone_width <= 3. => {
                     self.current_speed = self.randomized_initial_speed * 0.;
                 }
@@ -60,7 +67,6 @@ impl Vehicule{
             }
         } else if &*self.current_direction == "North" || &*self.current_direction == "South" {
             match self.zone.h {
-                //zone_height if zone_height <= 4. => self.current_speed = 0.,
                 zone_height if zone_height <= 3. => {
                     self.current_speed = 0.;
                 }

@@ -9,6 +9,7 @@ pub struct Stats {
     pub best_velocity: f32, // Meilleure vitesse
     pub worst_velocity: f32, // Pire vitesse
     pub collisions: u32, // Nombre de collisions
+    pub close_calls : u32, // Nombre de close calls
 }
 
 impl Stats {
@@ -21,6 +22,7 @@ impl Stats {
         draw_text(&format!("Best Velocity: {:.2}", self.best_velocity), 500.0, 410.0, 20.0, WHITE);
         draw_text(&format!("Worst Velocity: {:.2}", self.worst_velocity), 500.0, 440.0, 20.0, WHITE);
         draw_text(&format!("Collisions: {}", self.collisions), 500.0, 470.0, 20.0, WHITE);
+        draw_text(&format!("close calls: {}", self.close_calls), 500.0, 500.0, 20.0, WHITE);
     }
 
 }

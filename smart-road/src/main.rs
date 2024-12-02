@@ -24,11 +24,12 @@ async fn main() {
      // Variables initiales du jeu
      let mut statistics: Stats = Stats {
         total_cars: 0,
-        best_time: 999999999., // Temps le plus court
-        worst_time: 0., // Temps le plus long
-        best_velocity: 0., // Vitesse maximale
-        worst_velocity: 999999999., // Vitesse minimale
-        collisions: 0, // Nombre de collisions
+        best_time: 999999999.,
+        worst_time: 0.,
+        best_velocity: 0.,
+        worst_velocity: 999999999.,
+        collisions: 0,
+        close_calls: 0,
     };
 
     // État du jeu
@@ -37,7 +38,7 @@ async fn main() {
     let mut is_paused = false;
     let mut is_debug_mode = false;
 
-    let mut is_random = false; // Génération aléatoire de voitures
+    let mut is_random = false;
 
     let background: Texture2D = load_texture("assets/background.png").await.unwrap();
 

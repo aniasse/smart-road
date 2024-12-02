@@ -117,33 +117,27 @@ impl Vehicule {
     pub fn update_zone(&mut self, car_index: usize, temp_vehicules: &Vec<Vehicule>) {
         match &*self.current_direction {
             "West" => {
-                // Update zone rectangle
                 (self.zone.x, self.zone.y) = (self.rectangle.x - self.zone_size.long_edge, self.rectangle.y);
                 (self.zone.w, self.zone.h) = (self.zone_size.long_edge, self.zone_size.short_edge);
 
-                // Reposition the zone when intersection occur
                 for (other_index, other_car) in temp_vehicules.iter().enumerate() {
                     if car_index != other_index && self.zone.intersect(other_car.rectangle).is_some(){
                         self.zone.x = other_car.rectangle.x + other_car.rectangle.w;
                     }
-                    // Update zone width
                     self.zone.w = (self.rectangle.x - self.zone.x).abs().min(43.);
                 }
             }
             "North" => {
-                // Update zone rectangle
                 (self.zone.x, self.zone.y) = (self.rectangle.x, self.rectangle.y - self.zone_size.long_edge);
                 for (other_index, other_car) in temp_vehicules.iter().enumerate() {
                     if car_index != other_index && (self.zone.intersect(other_car.rectangle).is_some()){
                         self.zone.y = other_car.rectangle.y + other_car.rectangle.h;
                     }
-                    // Update zone width
                     self.zone.h = (self.rectangle.y - self.zone.y).abs().min(43.);
                     self.zone.w = 33.;
                 }
             }
             "South" => {
-                // Update zone rectangle
 
                 (self.zone.x, self.zone.y) = (self.rectangle.x, self.rectangle.y + self.zone_size.long_edge);
                 (self.zone.w, self.zone.h) = (self.zone_size.short_edge, self.zone_size.long_edge);
@@ -156,7 +150,6 @@ impl Vehicule {
                 }
             }
             "East" => {
-                // Update zone rectangle
                 (self.zone.x, self.zone.y) = (self.rectangle.x + self.rectangle.w, self.rectangle.y);
                 (self.zone.w, self.zone.h) = (self.zone_size.long_edge, self.zone_size.short_edge);
 
